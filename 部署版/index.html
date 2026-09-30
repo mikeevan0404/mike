@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#060a14">
+<title>MIKE · 液态玻璃博客</title>
+<meta name="description" content="Mike 的个人博客 —— 记录设计与代码，在液态玻璃与雨夜之间。">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%236fd8f6"/><stop offset="1" stop-color="%238f8bff"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="%23060a14"/><path d="M32 14c8 10 14 16.5 14 24a14 14 0 1 1-28 0c0-7.5 6-14 14-24z" fill="url(%23g)" opacity=".9"/></svg>'>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* ============ Design Tokens ============ */
+:root, [data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #060a14;
+  --text: #e9effc;
+  --text-muted: #9aa7c8;
+  --accent: #6fd8f6;
+  --accent-2: #8f8bff;
+  --glass-bg: rgba(148, 178, 235, .10);
+  --glass-bg-strong: rgba(148, 178, 235, .17);
+  --glass-border: rgba(190, 215, 255, .16);
+  --glass-hi: rgba(255, 255, 255, .12);
+  --chip-bg: rgba(120, 160, 255, .12);
+  --shadow: rgba(2, 8, 26, .45);
+  --rain-drop: 190, 220, 255;
+  --bolt: rgba(200, 230, 255, .20);
+  --nav-bg: rgba(10, 16, 30, .55);
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eaf2fb;
+  --text: #17233c;
+  --text-muted: #5c6b8c;
+  --accent: #0a8fd6;
+  --accent-2: #5f5fef;
+  --glass-bg: rgba(255, 255, 255, .5);
+  --glass-bg-strong: rgba(255, 255, 255, .68);
+  --glass-border: rgba(255, 255, 255, .85);
+  --glass-hi: rgba(255, 255, 255, .55);
+  --chip-bg: rgba(10, 143, 214, .10);
+  --shadow: rgba(31, 58, 106, .14);
+  --rain-drop: 70, 120, 210;
+  --bolt: rgba(255, 255, 255, .45);
+  --nav-bg: rgba(250, 253, 255, .55);
+}
+
+/* ============ Base ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+body {
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  overflow-x: hidden;
+  transition: background .45s ease, color .45s ease;
+}
+::selection { background: var(--accent); color: #04101c; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); text-decoration: none; }
+img { max-width: 100%; display: block; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ============ Background Layers ============ */
+.aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.aurora i { position: absolute; border-radius: 50%; filter: blur(70px); will-change: transform; }
+.aurora .b1 {
+  width: 46vw; height: 46vw; left: -8vw; top: -12vw;
+  background: radial-gradient(circle, rgba(56,189,248,.30), transparent 65%);
+  animation: drift1 26s ease-in-out infinite alternate;
+}
+.aurora .b2 {
+  width: 52vw; height: 52vw; right: -14vw; top: 6vw;
+  background: radial-gradient(circle, rgba(99,102,241,.32), transparent 65%);
+  animation: drift2 32s ease-in-out infinite alternate;
+}
+.aurora .b3 {
+  width: 44vw; height: 44vw; left: 22vw; bottom: -18vw;
+  background: radial-gradient(circle, rgba(167,139,250,.24), transparent 65%);
+  animation: drift3 38s ease-in-out infinite alternate;
+}
+.aurora .b4 {
+  width: 26vw; height: 26vw; right: 18vw; bottom: 8vw;
+  background: radial-gradient(circle, rgba(45,212,191,.18), transparent 65%);
+  animation: drift1 29s ease-in-out infinite alternate-reverse;
+}
+[data-theme="light"] .aurora .b1 { background: radial-gradient(circle, rgba(103,232,249,.42), transparent 65%); }
+[data-theme="light"] .aurora .b2 { background: radial-gradient(circle, rgba(165,180,252,.48), transparent 65%); }
+[data-theme="light"] .aurora .b3 { background: radial-gradient(circle, rgba(221,214,254,.6), transparent 65%); }
+[data-theme="light"] .aurora .b4 { background: radial-gradient(circle, rgba(153,246,228,.5), transparent 65%); }
+
+@keyframes drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(6vw, 5vh) scale(1.12); } }
+@keyframes drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-7vw, 6vh) scale(1.08); } }
+@keyframes drift3 { from { transform: translate(0,0) scale(1); } to { transform: translate(5vw, -6vh) scale(1.15); } }
+
+#rain { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+.bolt { position: fixed; inset: 0; z-index: 35; pointer-events: none; background: var(--bolt); opacity: 0; transition: opacity .14s ease-out; }
+.grain {
+  position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: .05; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+
+/* ============ Liquid Glass Panel ============ */
+.glass {
+  position: relative;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow) 0 18px 50px -18px, inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 rgba(0,0,0,.04);
+}
+.glass::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(115deg, var(--glass-hi) 0%, transparent 34%);
+}
+
+/* ============ Nav ============ */
+.nav {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+  z-index: 100; width: min(1120px, calc(100vw - 32px));
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 18px; padding: 10px 14px 10px 20px; border-radius: 999px;
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow) 0 14px 40px -18px, inset 0 1px 0 var(--glass-hi);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-family: "Space Grotesk", "Noto Sans SC", sans-serif; font-weight: 700; font-size: 20px; letter-spacing: .04em; color: var(--text); }
+.brand .drop {
+  width: 15px; height: 15px; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 14px var(--accent); flex: none;
+}
+.nav-links { display: flex; gap: 4px; }
+.nav-links a {
+  color: var(--text-muted); font-size: 14.5px; font-weight: 500;
+  padding: 7px 13px; border-radius: 999px; transition: color .25s, background .25s;
+}
+.nav-links a:hover { color: var(--text); background: var(--chip-bg); }
+.nav-links a.active { color: var(--accent); background: var(--chip-bg); }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  cursor: pointer; color: var(--text-muted); background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border); transition: color .25s, border-color .25s, transform .2s;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-1px); }
+.icon-btn.on { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px -2px var(--accent); }
+.icon-btn svg { width: 19px; height: 19px; }
+.icon-btn .icon-pause { display: none; }
+.icon-btn.on .icon-play { display: none; }
+.icon-btn.on .icon-pause { display: block; }
+.burger { display: none; }
+.mobile-panel {
+  display: none; position: fixed; top: 76px; left: 50%; transform: translateX(-50%) translateY(-8px);
+  width: min(560px, calc(100vw - 32px)); z-index: 99; padding: 14px;
+  flex-direction: column; gap: 4px; opacity: 0; transition: opacity .25s, transform .25s;
+}
+.mobile-panel.open { opacity: 1; transform: translateX(-50%) translateY(0); }
+.mobile-panel a { color: var(--text); padding: 11px 14px; border-radius: 12px; font-weight: 500; }
+.mobile-panel a:hover, .mobile-panel a.active { background: var(--chip-bg); color: var(--accent); }
+
+/* ============ Layout ============ */
+.page { position: relative; z-index: 2; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+section { padding: 88px 0; }
+.section-head { margin-bottom: 40px; }
+.section-head h2 { font-size: clamp(26px, 3.4vw, 34px); font-weight: 700; letter-spacing: .01em; }
+.section-head .rule { width: 64px; height: 4px; margin-top: 12px; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.section-head p { color: var(--text-muted); margin-top: 10px; max-width: 560px; font-size: 15px; }
+
+/* ============ Hero ============ */
+.hero { min-height: 100svh; display: flex; align-items: center; padding: 120px 0 72px; }
+.hero-card {
+  width: 100%; padding: clamp(28px, 5vw, 60px); text-align: center; border-radius: 28px;
+  transform: translateY(0); transition: transform .2s ease-out;
+  animation: heroIn 1s cubic-bezier(.22,1,.36,1) backwards;
+}
+@keyframes heroIn { from { opacity: 0; transform: translateY(26px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.avatar-wrap { width: 132px; height: 132px; margin: 0 auto 26px; padding: 5px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2), transparent 130%);
+  box-shadow: 0 0 30px -6px var(--accent); }
+.avatar-wrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.hero-name {
+  font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+  font-size: clamp(64px, 13.5vw, 176px); font-weight: 700; line-height: 1; letter-spacing: .02em;
+  background: linear-gradient(120deg, var(--text) 20%, var(--accent) 55%, var(--accent-2) 85%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 20px 40px var(--shadow));
+  transition: opacity .45s ease;
+}
+.hero-sub { margin-top: 14px; font-size: clamp(16px, 2.2vw, 21px); color: var(--text-muted); font-weight: 500; }
+.hero-tagline { margin-top: 12px; font-size: 15px; color: var(--text-muted); max-width: 560px; margin-inline: auto; }
+.hero-cta { margin-top: 32px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 14px;
+  font-weight: 600; font-size: 15px; cursor: pointer; border: 1px solid transparent;
+  font-family: inherit; transition: transform .22s ease, box-shadow .22s ease, border-color .22s;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #04101c; box-shadow: 0 12px 32px -12px var(--accent); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 38px -12px var(--accent); }
+.btn-ghost { background: var(--glass-bg-strong); border-color: var(--glass-border); color: var(--text); }
+.btn-ghost:hover { border-color: var(--accent); transform: translateY(-2px); }
+.hero-meta {
+  margin-top: 34px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  font-size: 13px; color: var(--text-muted); font-family: "JetBrains Mono", "Noto Sans SC", monospace;
+}
+.meta-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px; background: var(--glass-bg-strong); border: 1px solid var(--glass-border); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 10px #34d399; animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.scroll-hint { margin: 44px auto 0; width: 26px; height: 42px; border: 2px solid var(--text-muted); border-radius: 999px; display: grid; place-items: start center; padding-top: 7px; opacity: .65; }
+.scroll-hint i { width: 4px; height: 8px; border-radius: 4px; background: var(--accent); animation: scrollDot 1.8s ease-in-out infinite; }
+@keyframes scrollDot { 0% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(12px); opacity: 0; } 100% { transform: translateY(0); opacity: 0; } }
+
+/* ============ About ============ */
+.about-grid { display: grid; grid-template-columns: 240px 1fr; gap: 40px; align-items: start; }
+.about-avatar { border-radius: 24px; overflow: hidden; aspect-ratio: 1; }
+.about-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.about-bio p { color: var(--text); font-size: 15.5px; }
+.about-bio p + p { margin-top: 12px; }
+.stats { margin-top: 34px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.stat { padding: 20px; border-radius: 18px; text-align: center; }
+.stat b { font-family: "Space Grotesk", "Noto Sans SC", sans-serif; font-size: 30px; font-weight: 700; display: block; background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stat span { font-size: 13px; color: var(--text-muted); }
+
+/* ============ Cards Grid ============ */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.card { padding: 26px; border-radius: 20px; cursor: pointer; overflow: hidden; transition: transform .28s ease, box-shadow .28s ease, border-color .28s; }
+.card:hover { transform: translateY(-6px); border-color: var(--accent); box-shadow: var(--shadow) 0 26px 60px -20px, 0 0 26px -8px var(--accent); }
+.card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, var(--glass-hi) 50%, transparent 62%);
+  transform: translateX(-110%); transition: transform .9s ease;
+}
+.card:hover::after { transform: translateX(110%); }
+.card .cat { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--accent); padding: 4px 11px; border-radius: 999px; background: var(--chip-bg); border: 1px solid var(--glass-border); }
+.card h3 { margin: 14px 0 8px; font-size: 18.5px; font-weight: 700; line-height: 1.45; }
+.card .desc { font-size: 14px; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .meta { margin-top: 18px; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--text-muted); font-family: "JetBrains Mono", "Noto Sans SC", monospace; }
+.card .go { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--chip-bg); color: var(--accent); transition: transform .25s; }
+.card:hover .go { transform: translate(2px, -2px); }
+.card .go svg { width: 15px; height: 15px; }
+.card .tags { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 7px; }
+.tag { font-size: 12px; padding: 3px 10px; border-radius: 999px; color: var(--text-muted); background: var(--chip-bg); border: 1px solid var(--glass-border); }
+
+/* ============ Timeline ============ */
+.timeline { display: grid; grid-template-columns: 118px 28px 1fr; column-gap: 18px; row-gap: 0; }
+.tl-row { display: contents; }
+.tl-time { padding: 22px 0 22px 4px; text-align: right; font-family: "JetBrains Mono", "Noto Sans SC", monospace; font-size: 14px; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.tl-axis { position: relative; display: grid; justify-items: center; }
+.tl-axis::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; transform: translateX(-50%); background: linear-gradient(180deg, var(--accent), var(--accent-2), transparent); opacity: .5; }
+.tl-row:first-child .tl-axis::before { top: 40%; }
+.tl-row:last-child .tl-axis::before { bottom: 60%; }
+.tl-dot { width: 13px; height: 13px; margin-top: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 12px var(--accent); z-index: 1; }
+.tl-body { padding: 20px 0; }
+.tl-body h3 { font-size: 17px; font-weight: 700; }
+.tl-body .role { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+.tl-body p { font-size: 14px; color: var(--text-muted); margin-top: 6px; }
+
+/* ============ Skills ============ */
+.skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.skill-panel { padding: 26px; border-radius: 20px; }
+.skill-panel h3 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+.skill-panel h3::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 8px var(--accent); }
+.skill-panel .tags { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-panel .tag { font-size: 13px; padding: 5px 12px; }
+
+/* ============ Contact ============ */
+.contact-card { padding: clamp(30px, 5vw, 56px); text-align: center; border-radius: 28px; }
+.contact-card h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 700; }
+.contact-card p { color: var(--text-muted); margin-top: 10px; font-size: 15px; }
+.contact-actions { margin-top: 30px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.social-row { margin-top: 26px; display: flex; gap: 12px; justify-content: center; }
+.social-row a { color: var(--text-muted); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--glass-border); background: var(--glass-bg-strong); transition: color .25s, border-color .25s, transform .2s; }
+.social-row a:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
+.social-row svg { width: 16px; height: 16px; }
+
+/* ============ Footer ============ */
+footer { position: relative; z-index: 2; text-align: center; padding: 42px 24px 54px; color: var(--text-muted); font-size: 13px; }
+footer .foot-brand { font-family: "Space Grotesk", "Noto Sans SC", sans-serif; font-weight: 700; font-size: 15px; color: var(--text); letter-spacing: .05em; }
+footer p { margin-top: 6px; }
+
+/* ============ Modal & Toast ============ */
+.modal {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px;
+  background: rgba(4, 8, 20, .45);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  opacity: 0; pointer-events: none; visibility: hidden; transition: opacity .3s ease, visibility .3s;
+}
+.modal.open { opacity: 1; pointer-events: auto; visibility: visible; }
+.modal-card { width: min(680px, 100%); max-height: min(82svh, 700px); overflow-y: auto; padding: 34px; border-radius: 24px; transform: translateY(14px) scale(.98); transition: transform .3s cubic-bezier(.22,1,.36,1); }
+.modal.open .modal-card { transform: translateY(0) scale(1); }
+.modal-close { position: sticky; float: right; top: 0; margin-left: 12px; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--glass-bg-strong); border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; transition: color .2s, border-color .2s; }
+.modal-close:hover { color: var(--accent); border-color: var(--accent); }
+.modal-card h3 { font-size: 24px; font-weight: 700; line-height: 1.4; margin-top: 4px; }
+.modal-card .m-meta { margin: 10px 0 20px; font-size: 13px; color: var(--text-muted); font-family: "JetBrains Mono", "Noto Sans SC", monospace; }
+.modal-card .m-body p { font-size: 15px; color: var(--text); }
+.modal-card .m-body p + p { margin-top: 12px; }
+.modal-card .m-body h4 { font-size: 16.5px; margin: 22px 0 8px; }
+.toast {
+  position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(16px);
+  z-index: 300; padding: 12px 22px; border-radius: 999px; font-size: 14px; color: var(--text);
+  background: var(--nav-bg); border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  box-shadow: var(--shadow) 0 12px 34px -14px;
+  opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.to-top {
+  position: fixed; right: 26px; bottom: 26px; z-index: 90; width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer; color: var(--text-muted);
+  background: var(--nav-bg); border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  opacity: 0; pointer-events: none; transition: opacity .3s, color .25s, border-color .25s, transform .25s;
+}
+.to-top.show { opacity: 1; pointer-events: auto; }
+.to-top:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-3px); }
+.to-top svg { width: 19px; height: 19px; }
+
+/* ============ Responsive ============ */
+@media (max-width: 960px) {
+  .grid, .skills { grid-template-columns: 1fr; }
+  .about-grid { grid-template-columns: 1fr; }
+  .about-avatar { max-width: 260px; }
+  .stats { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 720px) {
+  section { padding: 64px 0; }
+  .nav-links { display: none; }
+  .burger { display: grid; }
+  .mobile-panel { display: flex; }
+  .timeline { grid-template-columns: 84px 24px 1fr; column-gap: 12px; }
+  .tl-time { font-size: 12.5px; }
+  .stats { grid-template-columns: 1fr; }
+  .hero { padding-top: 108px; }
+}
+@media (max-width: 420px) {
+  .wrap { padding: 0 16px; }
+  .nav { width: calc(100vw - 20px); }
+}
+
+/* ============ Reduced Motion ============ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .aurora i { animation: none !important; }
+  .hero-card { animation: none; }
+  .scroll-hint i, .status-dot { animation: none; }
+  .card::after { display: none; }
+  * { transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+<canvas id="rain" aria-hidden="true"></canvas>
+<div class="bolt" id="bolt" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="#home" data-nav>
+    <span class="drop"></span><span>MIKE</span>
+  </a>
+  <nav class="nav-links" aria-label="主导航">
+    <a href="#home" data-nav>首页</a>
+    <a href="#about" data-nav>关于</a>
+    <a href="#blog" data-nav>文章</a>
+    <a href="#projects" data-nav>项目</a>
+    <a href="#timeline" data-nav>经历</a>
+    <a href="#contact" data-nav>联系</a>
+  </nav>
+  <div class="nav-actions">
+    <button class="icon-btn" id="rainToggle" aria-label="切换雨滴特效" title="雨滴特效">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 1 1 .6-7.96 5 5 0 0 1 9.6 1.2A3.5 3.5 0 0 1 17 15h-3"/><path d="m9 17 1.2-3M12.5 19l1.4-3.4M15.5 17l1.2-3"/></svg>
+    </button>
+    <button class="icon-btn" id="themeToggle" aria-label="切换深色 / 浅色模式" title="深浅色切换">
+      <svg id="iconTheme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="icon-btn" id="musicToggle" aria-label="播放音乐《失眠》" title="播放音乐《失眠》">
+      <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5.5v13l11-6.5z"/></svg>
+      <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+    </button>
+    <button class="icon-btn burger" id="burger" aria-label="展开菜单" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="mobile-panel glass" id="mobilePanel">
+  <a href="#home" data-nav>首页</a>
+  <a href="#about" data-nav>关于</a>
+  <a href="#blog" data-nav>文章</a>
+  <a href="#projects" data-nav>项目</a>
+  <a href="#timeline" data-nav>经历</a>
+  <a href="#contact" data-nav>联系</a>
+</div>
+
+<main class="page">
+
+  <!-- ===== 视图：首页 Hero ===== -->
+  <section class="hero" id="home">
+    <div class="wrap">
+      <div class="hero-card glass" id="heroCard">
+        <div class="avatar-wrap"><img src="assets/avatar.png" alt="Mike 的液态玻璃头像" width="132" height="132"></div>
+        <h1 class="hero-name">MIKE</h1>
+        <p class="hero-sub">爱研究数码的初中生 · CS2 &amp; 无畏契约玩家</p>
+        <p class="hero-tagline">研究数码，也打 CS2 和无畏契约，平时想到什么记点什么。</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#blog" data-nav>阅读文章</a>
+          <a class="btn btn-ghost" href="#contact" data-nav>联系我</a>
+        </div>
+        <div class="hero-meta">
+          <span class="meta-pill">位置 · 成都</span>
+          <span class="meta-pill"><i class="status-dot"></i>状态 · 随缘上线</span>
+          <span class="meta-pill" id="clock">--:--:--</span>
+        </div>
+        <div class="scroll-hint" aria-hidden="true"><i></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：关于 ===== -->
+  <section class="section" id="about">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>关于我</h2>
+        <div class="rule"></div>
+        <p>一个爱研究数码的初中生，也玩 CS2 和无畏契约。</p>
+      </div>
+      <div class="about-grid">
+        <div class="about-avatar glass"><img src="assets/avatar.png" alt="Mike 头像"></div>
+        <div class="about-bio">
+          <p>你好，我是 Mike，一名爱研究数码的初中生。</p>
+          <p>这个博客用来记我折腾数码、打游戏的事，写得不专业，随便看看。</p>
+          <div class="stats">
+            <div class="stat glass"><b>数码</b><span>硬件 · 系统 · 外设</span></div>
+            <div class="stat glass"><b>CS2</b><span>步枪手 · 练枪中</span></div>
+            <div class="stat glass"><b>无畏契约</b><span>
+            </span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：文章 ===== -->
+  <section class="section" id="blog">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>最新文章</h2>
+        <div class="rule"></div>
+        <p>随便记记，更新看心情。</p>
+      </div>
+      <div class="grid">
+        <article class="card glass" data-article="1" tabindex="0" role="button" aria-label="打开文章：把网站做成液态玻璃，踩了一堆坑">
+          <h3>114514</h3>
+          <p class="desc">520</p>
+          <div class="meta"><span>2026-09-20</span><span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </article>
+        <article class="card glass" data-article="2" tabindex="0" role="button" aria-label="打开文章：给页面加了一场雨">
+          <h3>给页面加了一场雨：Canvas 雨夜笔记</h3>
+          <p class="desc">666</p>
+          <div class="meta"><span>2026-09-12</span><span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </article>
+        <article class="card glass" data-article="3" tabindex="0" role="button" aria-label="打开文章：深色模式没那么简单">
+          <h3>上学</h3>
+          <p class="desc">1314</p>
+          <div class="meta"><span>2026-08-30</span><span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：项目 ===== -->
+  <section class="section" id="projects">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>项目</h2>
+        <div class="rule"></div>
+        <p>自己折腾的一些东西。</p>
+      </div>
+      <div class="grid">
+        <div class="card glass" data-toast="演示项目 · 可在源码中替换为你的真实项目">
+          <span class="cat">组件库</span>
+          <h3>Liquid UI</h3>
+          <p class="desc">自己折腾的玻璃风格组件库，深浅色都能用，不依赖框架，想塞进哪个页面都行。</p>
+          <div class="tags"><span class="tag">React</span><span class="tag">TypeScript</span><span class="tag">CSS</span></div>
+          <div class="meta"><span>2026 · 开源</span><span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div>
+        <div class="card glass" data-toast="演示项目 · 可在源码中替换为你的真实项目">
+          <span class="cat">特效引擎</span>
+          <h3>Rain-FX</h3>
+          <p class="desc">就是博客里这套下雨特效，抽出来做成一个小工具，别的页面也能用。</p>
+          <div class="tags"><span class="tag">Canvas</span><span class="tag">TypeScript</span><span class="tag">1KB</span></div>
+          <div class="meta"><span>2026 · 开源</span><span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div>
+        <div class="card glass" data-toast="演示项目 · 可在源码中替换为你的真实项目">
+          <span class="cat">产品</span>
+          <h3>GlassNotes</h3>
+          <p class="desc">一个记灵感的小应用，界面做成玻璃片，平时想到什么就记一笔。</p>
+          <div class="tags"><span class="tag">全栈</span><span class="tag">Node.js</span><span class="tag">SQLite</span></div>
+          <div class="meta"><span>2025 · 产品</span><span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：经历 ===== -->
+  <section class="section" id="timeline">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>经历</h2>
+        <div class="rule"></div>
+        <p>也没什么大经历，就是些日常。</p>
+      </div>
+      <div class="timeline">
+        <div class="tl-row">
+          <div class="tl-time">现在</div>
+          <div class="tl-axis"><span class="tl-dot"></span></div>
+          <div class="tl-body">
+            <h3>初中生 · 数码爱好者</h3>
+            <div class="role">数码 + 游戏</div>
+            <p>平时研究数码，也打游戏，想到什么写点什么。</p>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-time">日常</div>
+          <div class="tl-axis"><span class="tl-dot"></span></div>
+          <div class="tl-body">
+            <h3>CS2 战场 · 反恐精英2</h3>
+            <div class="role">练枪法、学道具</div>
+            <p>没事就练枪，研究地图点位，外设也折腾，鼠标键盘换过几轮。</p>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-time">日常</div>
+          <div class="tl-axis"><span class="tl-dot"></span></div>
+          <div class="tl-body">
+            <h3>无畏契约 · 英雄战术射击</h3>
+            <div class="role">练定位、打配合</div>
+            <p>练定位、打配合，跟朋友开黑，偶尔也能上分。</p>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-time">爱好</div>
+          <div class="tl-axis"><span class="tl-dot"></span></div>
+          <div class="tl-body">
+            <h3>数码研究 · 从参数到实操</h3>
+            <div class="role">拆开看个究竟</div>
+            <p>从参数看到实际手感，拆过机、装过系统，弄坏了再想办法修回来。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：技能 ===== -->
+  <section class="section" id="skills">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>技能</h2>
+        <div class="rule"></div>
+        <p>课业之外，喜欢捣鼓的东西。</p>
+      </div>
+      <div class="skills">
+        <div class="skill-panel glass">
+          <h3>数码研究</h3>
+          <div class="tags">
+            <span class="tag">硬件参数</span><span class="tag">装机配置</span><span class="tag">系统折腾</span>
+            <span class="tag">外设调校</span><span class="tag">性能对比</span>
+          </div>
+        </div>
+        <div class="skill-panel glass">
+          <h3>游戏</h3>
+          <div class="tags">
+            <span class="tag">CS2</span><span class="tag">无畏契约</span><span class="tag">枪法练习</span>
+            <span class="tag">战术配合</span><span class="tag">地图理解</span>
+          </div>
+        </div>
+        <div class="skill-panel glass">
+          <h3>正在学习</h3>
+          <div class="tags">
+            <span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span>
+            <span class="tag">AI 工具</span><span class="tag">网页开发</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：联系 ===== -->
+  <section class="section" id="contact">
+    <div class="wrap">
+      <div class="contact-card glass">
+        <h2>欢迎来找我玩</h2>
+        <p>想聊数码、游戏，或者有啥好玩的，来 GitHub 找我。</p>
+        <div class="contact-actions">
+          <a class="btn btn-ghost" href="https://github.com/mikeevan0404" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="foot-brand">MIKE <span style="color:var(--accent)">·</span> 液态玻璃博客</div>
+  <p>© 2026 MIKE · 一个初中生的博客，随便写写</p>
+</footer>
+
+<!-- ===== 弹窗：文章阅读 ===== -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-card glass" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="关闭文章">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <h3 id="modalTitle">文章标题</h3>
+    <div class="m-meta" id="modalMeta">· 阅读时间</div>
+    <div class="m-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<button class="to-top" id="toTop" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<audio id="music" src="assets/music.mp3" preload="none" loop></audio>
+
+<script>
+(function () {
+  "use strict";
+  const root = document.documentElement;
+  const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- Theme ---------- */
+  const themeToggle = document.getElementById("themeToggle");
+  const iconTheme = document.getElementById("iconTheme");
+  let theme = localStorage.getItem("mike-theme") ||
+    (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  function applyTheme(t) {
+    theme = t;
+    root.dataset.theme = t;
+    try { localStorage.setItem("mike-theme", t); } catch (e) {}
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = t === "dark" ? "#060a14" : "#eaf2fb";
+    iconTheme.innerHTML = t === "dark"
+      ? '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
+      : '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>';
+    rainColor = getComputedStyle(root).getPropertyValue("--rain-drop").trim();
+  }
+  themeToggle.addEventListener("click", () => applyTheme(theme === "dark" ? "light" : "dark"));
+
+  /* ---------- Clock ---------- */
+  const clock = document.getElementById("clock");
+  function tick() {
+    const d = new Date();
+    const p = n => String(n).padStart(2, "0");
+    clock.textContent = "时间 · " + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+
+  /* ---------- Rain Canvas ---------- */
+  const canvas = document.getElementById("rain");
+  const ctx = canvas.getContext("2d");
+  const boltEl = document.getElementById("bolt");
+  let W = 0, H = 0;
+  let rainOn = localStorage.getItem("mike-rain") !== "off" && !RM;
+  let rainColor = getComputedStyle(root).getPropertyValue("--rain-drop").trim();
+  let drops = [], ripples = [], splash = [];
+  let rippleTimer = 0;
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function seedDrops() {
+    const n = W < 700 ? 70 : W < 1200 ? 110 : 160;
+    drops = [];
+    for (let i = 0; i < n; i++) drops.push(spawnDrop(true));
+  }
+  function spawnDrop(top) {
+    return { x: rand(0, W), y: top ? rand(-H * 1.2, -20) : rand(0, H), len: rand(13, 30), v: rand(9, 17), a: rand(.14, .5), w: rand(.8, 1.4) };
+  }
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    seedDrops();
+  }
+  function drawRain() {
+    ctx.clearRect(0, 0, W, H);
+    if (!rainOn) return;
+    ctx.lineCap = "round";
+    for (const d of drops) {
+      ctx.strokeStyle = "rgba(" + rainColor + "," + d.a + ")";
+      ctx.lineWidth = d.w;
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - d.len * .28, d.y + d.len);
+      ctx.stroke();
+      d.y += d.v; d.x -= d.v * .22;
+      if (d.y > H + 20) {
+        splash.push({ x: d.x, y: H - rand(0, 6), t: 0, n: 6 });
+        d.x = rand(-20, W + 20); d.y = rand(-H * 1.2, -20);
+      }
+    }
+    for (let i = splash.length - 1; i >= 0; i--) {
+      const s = splash[i]; s.t += 1;
+      const fade = 0.32 * (1 - s.t / 16);
+      if (fade <= 0) { splash.splice(i, 1); continue; }
+      ctx.strokeStyle = "rgba(" + rainColor + "," + fade + ")";
+      for (let k = 0; k < s.n; k++) {
+        const ang = (k / s.n) * Math.PI;
+        const r = 2 + s.t * 0.9;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x + Math.cos(ang) * r, s.y - Math.sin(ang) * r * 0.55);
+        ctx.stroke();
+      }
+    }
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const rp = ripples[i]; rp.r += 0.8; rp.a *= 0.965;
+      if (rp.a < 0.02) { ripples.splice(i, 1); continue; }
+      ctx.strokeStyle = "rgba(" + rainColor + "," + rp.a + ")";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(rp.x, rp.y, rp.r, rp.r * .3, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+  function animate() {
+    if (!document.hidden) {
+      drawRain();
+      if (rainOn && rippleTimer++ % 26 === 0) ripples.push({ x: rand(W * .1, W * .9), y: H - rand(10, 120), r: rand(4, 9), a: 0.35 });
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function boltLoop() {
+    if (rainOn) {
+      boltEl.style.transition = "none";
+      boltEl.style.opacity = 1;
+      requestAnimationFrame(() => {
+        boltEl.style.transition = "opacity .5s ease-out";
+        boltEl.style.opacity = 0;
+      });
+    }
+    setTimeout(boltLoop, rand(9, 18) * 1000);
+  }
+
+  window.addEventListener("resize", resize);
+
+  const rainToggle = document.getElementById("rainToggle");
+  function applyRainUI() {
+    rainToggle.classList.toggle("on", rainOn);
+    rainToggle.setAttribute("aria-label", rainOn ? "关闭雨滴特效" : "开启雨滴特效");
+  }
+  rainToggle.addEventListener("click", () => {
+    rainOn = !rainOn;
+    try { localStorage.setItem("mike-rain", rainOn ? "on" : "off"); } catch (e) {}
+    applyRainUI();
+    if (rainOn) seedDrops(); else ctx.clearRect(0, 0, W, H);
+  });
+
+  resize();
+  applyRainUI();
+  applyTheme(theme);
+  animate();
+  if (rainOn) boltLoop();
+
+  /* ---------- Nav ---------- */
+  const burger = document.getElementById("burger");
+  const panel = document.getElementById("mobilePanel");
+  burger.addEventListener("click", () => {
+    const open = panel.classList.toggle("open");
+    burger.setAttribute("aria-expanded", open);
+  });
+  document.querySelectorAll("[data-nav]").forEach(a => {
+    a.addEventListener("click", () => { panel.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); });
+  });
+  const sections = document.querySelectorAll("section[id]");
+  const navLinks = document.querySelectorAll(".nav-links a, .mobile-panel a");
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        navLinks.forEach(l => l.classList.toggle("active", l.getAttribute("href") === "#" + en.target.id));
+      }
+    });
+  }, { rootMargin: "-38% 0px -55% 0px" });
+  sections.forEach(s => io.observe(s));
+
+  /* ---------- Cards: articles & projects ---------- */
+  const ARTICLES = {
+    1: { t: "把网站做成液态玻璃，踩了一堆坑", m: "CSS 质感 · 2026-09-20",
+      b: [
+        { h: "", p: "做这个博客的时候一直在折腾玻璃效果。网上教程一抓一大把，抄来抄去发现其实就是几个参数的事：背景模糊、半透明底色、再加一条高光边。" },
+        { h: "", p: "后来才反应过来，真正让玻璃“活”起来的是背后的背景。我在后面放了几团会慢慢飘的渐变色，玻璃面板一糊，颜色透过模糊的边缘透出来，才有那味儿。" },
+        { h: "", p: "坑也不少。模糊开太高，笔记本风扇直接起飞；高光太亮，浅色模式下字都看不清。最后干脆用 CSS 变量管所有参数，深色模式玻璃偏暗，浅色模式玻璃偏白，切主题只改一层变量，省事。" }
+      ]},
+    2: { t: "给页面加了一场雨：Canvas 雨夜笔记", m: "JavaScript · 2026-09-12",
+      b: [
+        { h: "", p: "下雨特效其实就是一堆斜线在往下掉。每根的长度、速度、透明度都稍微弄出点差别，看起来就不那么假。" },
+        { h: "", p: "雨落到屏幕底边会炸出几条小水花，再画一圈慢慢变淡的椭圆当涟漪。闪电更省事，根本不用画闪电——整个屏幕盖一层淡色，随机时间突然亮一下再慢慢暗下去，看着就像打雷。" },
+        { h: "", p: "颜色跟着主题走：深色模式用发蓝的白，浅色模式用深一点的蓝。手机屏幕小，雨丝数量减一半，不然会卡。" }
+      ]},
+    3: { t: "深色模式没那么简单", m: "设计 · 2026-08-30",
+      b: [
+        { h: "", p: "一开始我以为深色模式就是把颜色反过来，做出来丑得不行，直接关掉了。" },
+        { h: "", p: "后来才想明白，深色模式相当于重新开灯：背景是发光体，卡片和背景靠亮度的微小差别分开，边框要少用，不然满屏发光的线看起来很廉价。" },
+        { h: "", p: "品牌色也得单独配一套暗夜版本，亮色里的蓝直接搬过来会刺眼。正文对比度至少保证能看清，其他的能省则省。" }
+      ]}
+  };
+  const modal = document.getElementById("modal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalMeta = document.getElementById("modalMeta");
+  const modalBody = document.getElementById("modalBody");
+  function openModal(id) {
+    const a = ARTICLES[id]; if (!a) return;
+    modalTitle.textContent = a.t;
+    modalMeta.textContent = a.m;
+    modalBody.innerHTML = a.b.map(blk => (blk.h ? "<h4>" + blk.h + "</h4>" : "") + "<p>" + blk.p + "</p>").join("");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+  function closeModal() {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+  document.querySelectorAll("[data-article]").forEach(card => {
+    card.addEventListener("click", () => openModal(card.dataset.article));
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(card.dataset.article); }
+    });
+  });
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+  modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+  /* ---------- Toast ---------- */
+  const toast = document.getElementById("toast");
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+  }
+  document.querySelectorAll("[data-toast]").forEach(card => {
+    card.addEventListener("click", () => showToast(card.dataset.toast));
+  });
+
+  /* ---------- Music ---------- */
+  const music = document.getElementById("music");
+  const musicToggle = document.getElementById("musicToggle");
+  music.volume = 0.5;
+  function setMusicUI(playing) {
+    musicToggle.classList.toggle("on", playing);
+    musicToggle.setAttribute("aria-label", playing ? "暂停音乐《失眠》" : "播放音乐《失眠》");
+    musicToggle.setAttribute("title", playing ? "暂停音乐《失眠》" : "播放音乐《失眠》");
+  }
+  musicToggle.addEventListener("click", () => {
+    if (music.paused) {
+      music.play().then(() => setMusicUI(true)).catch(() => showToast("音乐加载失败，稍后再试"));
+    } else {
+      music.pause();
+      setMusicUI(false);
+    }
+  });
+
+  /* ---------- To Top ---------- */
+  const toTop = document.getElementById("toTop");
+  window.addEventListener("scroll", () => {
+    toTop.classList.toggle("show", window.scrollY > 620);
+  }, { passive: true });
+  toTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  /* ---------- Hero parallax (fine pointers only) ---------- */
+  const heroCard = document.getElementById("heroCard");
+  if (!RM && window.matchMedia("(pointer: fine)").matches) {
+    const heroSec = document.getElementById("home");
+    heroSec.addEventListener("mousemove", e => {
+      const r = heroSec.getBoundingClientRect();
+      const dx = (e.clientX - r.left) / r.width - .5;
+      const dy = (e.clientY - r.top) / r.height - .5;
+      heroCard.style.transform = "translate(" + (dx * 10).toFixed(1) + "px," + (dy * 8).toFixed(1) + "px)";
+    });
+    heroSec.addEventListener("mouseleave", () => { heroCard.style.transform = ""; });
+  }
+})();
+</script>
+</body>
+</html>

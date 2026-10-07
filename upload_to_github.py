@@ -57,9 +57,17 @@ def create_repo(name: str) -> bool:
     return r is not None
 
 
+def _file_sha(repo: str, path: str) -> str | None:
+    r = api("GET", f"https://api.github.com/repos/{OWNER}/{repo}/contents/{path}")
+    return r["sha"] if r else None
+
+
 def upload_file(repo: str, rel: Path, content: bytes) -> None:
     url = f"https://api.github.com/repos/{OWNER}/{repo}/contents/{rel.as_posix()}"
     body = {"message": f"upload {rel.as_posix()}", "content": base64.b64encode(content).decode()}
+    sha = _file_sha(repo, rel.as_posix())
+    if sha:  # 文件已存在：更新必须携带 sha
+        body["sha"] = sha
     api("PUT", url, body)
 
 

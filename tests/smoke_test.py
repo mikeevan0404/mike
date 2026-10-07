@@ -16,14 +16,28 @@ def step(name: str) -> None:
 
 def main() -> None:
     # 1) 全部模块导入（验证 router 注册无循环依赖、无拼写错误）
-    from bot.handlers import admin, antispam, captcha, common, stats, welcome, wordfilter
+    from bot.handlers import (
+        admin,
+        ai_reply,
+        antispam,
+        captcha,
+        common,
+        keyword,
+        lottery,
+        points,
+        stats,
+        welcome,
+        wordfilter,
+    )
     from bot import main as bot_main  # noqa: F401
 
     routers = [
         common.router, welcome.router, captcha.router,
-        antispam.router, wordfilter.router, stats.router, admin.router,
+        antispam.router, wordfilter.router, keyword.router,
+        points.router, lottery.router, ai_reply.router,
+        stats.router, admin.router,
     ]
-    step(f"[1] 模块导入 OK：{[r.name for r in routers]}")
+    step(f"[1] 模块导入 OK：{len(routers)} 个 router：{[r.name for r in routers]}")
 
     # 2) 数据库全功能冒烟测试（临时库）
     from bot.database import Database
@@ -60,8 +74,47 @@ def main() -> None:
         assert len(top) == 2 and top[0]["msg_count"] == 2, [dict(r) for r in top]
         assert await db.user_today(-1001, 42) == 2
         assert await db.user_today(-1001, 999) == 0
+        step("[2e] msg_stats OK")
+
+        # 积分签到：首次签到 / 当日重复签到 / 积分与排行
+        s1 = await db.sign_in(-1001, 42, "alice", "Alice")
+        assert s1["signed"] and s1["streak"] == 1 and s1["points"] == 1, s1
+        s2 = await db.sign_in(-1001, 42, "alice", "Alice")  # 当日重复
+        assert not s2["signed"], s2
+        await db.sign_in(-1001, 7, "bob", "Bob")
+        top_pts = await db.top_points(-1001, 5)
+        # 两名用户各 1 分，排序不依赖顺序，只校验成员与分值
+        assert len(top_pts) == 2 and all(r["points"] == 1 for r in top_pts), [dict(r) for r in top_pts]
+        assert {r["user_id"] for r in top_pts} == {42, 7}
+        step("[2f] points 积分签到 OK")
+
+        # 抽奖：创建 / 参与 / 去重 / 开奖数据
+        lid = await db.create_lottery(-1001, "现金红包 100 元", 2, 42)
+        assert await db.join_lottery(lid, 1, "u1", "U1") is True
+        assert await db.join_lottery(lid, 1, "u1", "U1") is False  # 重复参与
+        assert await db.join_lottery(lid, 2, "u2", "U2") is True
+        assert await db.lottery_entry_count(lid) == 2
+        row = await db.get_lottery(lid)
+        assert row and row["status"] == "open" and row["winners_count"] == 2, dict(row)
+        entries = await db.lottery_entries(lid)
+        assert len(entries) == 2
+        await db.close_lottery(lid)
+        assert (await db.get_lottery(lid))["status"] == "closed"
+        step("[2g] lottery 抽奖 OK")
+
+        # 关键词回复：增删查与命中
+        await db.add_keyword(-1001, "群规", "进群请先看置顶群规", 42)
+        await db.add_keyword(-1001, "价格", "套餐价格请私聊管理", 42)
+        assert await db.find_keyword(-1001, "请问群规是什么") == "进群请先看置顶群规"
+        assert await db.find_keyword(-1001, "今天天气不错") is None
+        assert await db.del_keyword(-1001, "价格") is True
+        assert await db.del_keyword(-1001, "价格") is False
+        rows = await db.get_keywords(-1001)
+        assert len(rows) == 1 and rows[0]["keyword"] == "群规", [dict(r) for r in rows]
+        step("[2h] keyword 关键词面板 OK")
+
         await db.close()
-        step("[2] 数据库读写 OK：配置/敏感词/计次/统计 全部通过")
+        step("[2] 数据库读写 OK：全部 8 组数据通过")
 
     asyncio.run(db_test())
 

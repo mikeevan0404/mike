@@ -1,6 +1,6 @@
 # 🤖 Telegram 群管机器人
 
-基于 **Python + aiogram 3** 的 Telegram 群管理机器人，支持入群验证、防广告防刷屏、敏感词过滤、管理员指令、群活跃统计，开箱即用，**Docker 一键部署**。
+基于 **Python + aiogram 3** 的 Telegram 群管理机器人，支持入群验证、防广告防刷屏、敏感词过滤、关键词面板、AI 自动回复、积分签到、抽奖、管理员指令、群活跃统计，开箱即用，**Docker 一键部署**。
 
 ## ✨ 功能特性
 
@@ -11,6 +11,10 @@
 | 🚫 防广告 | 检测非白名单域名链接，删除 + 警告，累计 3 次自动禁言 1 小时 |
 | 🌀 防刷屏 | 窗口时间内消息数超阈值自动禁言 |
 | 🔤 敏感词过滤 | 命中自动删除 + 警告，累计 3 次禁言；词表按群管理 |
+| 🎛 关键词面板 | 管理员面板一键添加「关键词→自动回复」，成员发关键词即触发 |
+| 🤖 AI 自动回复 | @机器人或回复它即对话（OpenAI 兼容接口，支持国内中转） |
+| 💰 积分签到 | 每日签到、连续签到奖励、积分排行榜 |
+| 🎁 抽奖工具 | 管理员发起抽奖，成员点按钮参与，开奖随机抽取 |
 | 🛠 管理员指令 | 踢人 / 封禁 / 解封 / 禁言 / 解禁 / 删消息 / 置顶 |
 | 📊 活跃统计 | 按自然日统计发言数，今日排行 TOP10 |
 | 💾 数据持久化 | SQLite 本地存储，无需外部数据库，重启不丢配置 |
@@ -30,6 +34,10 @@ tg-group-manager-bot/
 │       ├── captcha.py        # 入群验证码
 │       ├── antispam.py       # 防广告 / 防刷屏
 │       ├── wordfilter.py     # 敏感词过滤
+│       ├── keyword.py        # 关键词自动回复面板
+│       ├── points.py         # 积分签到
+│       ├── lottery.py        # 抽奖工具
+│       ├── ai_reply.py       # AI 自动回复
 │       ├── stats.py          # 活跃统计
 │       └── admin.py          # 管理员指令
 ├── data/                     # SQLite 数据（Docker volume 持久化）
@@ -169,6 +177,11 @@ PROXY=http://127.0.0.1:7890
 | `/delword 词` | 删除敏感词 | 管理员 |
 | `/listwords` | 查看敏感词列表 | 管理员 |
 | `/resetstrikes` | 重置违规计次（回复目标用户） | 管理员 |
+| `/panel` | 打开关键词自动回复面板 | 管理员 |
+| `/lottery 人数 奖品` | 发起抽奖（如 `/lottery 3 现金红包`） | 管理员 |
+| `/sign` | 每日签到 | 所有人 |
+| `/points` | 查看我的积分 | 所有人 |
+| `/top` | 积分排行榜 TOP10 | 所有人 |
 
 ## ⚙️ 环境变量
 
@@ -185,6 +198,15 @@ PROXY=http://127.0.0.1:7890
 | `LINK_WHITELIST` | `t.me,...` | 链接白名单域名，逗号分隔 |
 | `LOG_LEVEL` | `INFO` | 日志级别 |
 | `PROXY` | （空） | 网络代理（国内服务器必填），支持 http/https/socks5 |
+| `AI_ENABLED` | `false` | 是否开启 AI 自动回复 |
+| `AI_API_KEY` | （空） | OpenAI 兼容接口 Key（支持国内中转） |
+| `AI_BASE_URL` | `https://api.openai.com/v1` | 接口地址 |
+| `AI_MODEL` | `gpt-4o-mini` | 模型名 |
+| `AI_SYSTEM_PROMPT` | （内置人设） | AI 系统提示词 |
+| `AI_MIN_INTERVAL` | `30` | 同一用户 AI 提问最小间隔（秒） |
+| `SIGN_DAILY_POINTS` | `1` | 每日签到积分 |
+| `SIGN_STREAK_DAYS` | `7` | 连续签到 N 天发奖励 |
+| `SIGN_STREAK_BONUS` | `3` | 连续签到奖励积分 |
 
 ## ⚠️ 部署注意事项
 

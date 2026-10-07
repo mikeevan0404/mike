@@ -28,6 +28,17 @@ class Settings:
     flood_mute_seconds: int
     log_level: str
     proxy: str
+    # AI 自动回复
+    ai_enabled: bool
+    ai_api_key: str
+    ai_base_url: str
+    ai_model: str
+    ai_system_prompt: str
+    ai_min_interval: int
+    # 积分签到
+    sign_daily_points: int
+    sign_streak_days: int
+    sign_streak_bonus: int
 
 
 def load_settings() -> Settings:
@@ -48,6 +59,18 @@ def load_settings() -> Settings:
         flood_mute_seconds=int(os.getenv("FLOOD_MUTE_SECONDS", "600")),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         proxy=os.getenv("PROXY", "").strip(),
+        ai_enabled=os.getenv("AI_ENABLED", "false").strip().lower() == "true",
+        ai_api_key=os.getenv("AI_API_KEY", "").strip(),
+        ai_base_url=os.getenv("AI_BASE_URL", "https://api.openai.com/v1").strip().rstrip("/"),
+        ai_model=os.getenv("AI_MODEL", "gpt-4o-mini").strip(),
+        ai_system_prompt=os.getenv(
+            "AI_SYSTEM_PROMPT",
+            "你是一个友好的 Telegram 群聊助手，用简体中文简短、自然地回答问题，避免长篇大论。",
+        ).strip(),
+        ai_min_interval=int(os.getenv("AI_MIN_INTERVAL", "30")),
+        sign_daily_points=int(os.getenv("SIGN_DAILY_POINTS", "1")),
+        sign_streak_days=int(os.getenv("SIGN_STREAK_DAYS", "7")),
+        sign_streak_bonus=int(os.getenv("SIGN_STREAK_BONUS", "3")),
     )
 
 

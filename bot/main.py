@@ -10,7 +10,19 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.config import settings
 from bot.database import db
-from bot.handlers import admin, antispam, captcha, common, stats, welcome, wordfilter
+from bot.handlers import (
+    admin,
+    ai_reply,
+    antispam,
+    captcha,
+    common,
+    keyword,
+    lottery,
+    points,
+    stats,
+    welcome,
+    wordfilter,
+)
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level, logging.INFO),
@@ -42,6 +54,10 @@ async def main() -> None:
         captcha.router,
         antispam.router,
         wordfilter.router,
+        keyword.router,
+        points.router,
+        lottery.router,
+        ai_reply.router,
         stats.router,
         admin.router,
     )
